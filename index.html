@@ -4,24 +4,27 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>Totem Refeitório - Multi</title>
+  
+  <!-- Carregamento das bibliotecas de IA facial via CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
+
   <style>
     :root {
-      --primary: #0056b3;
-      --primary-dark: #003d82;
-      --success: #28a745;
-      --warning: #ffc107;
-      --danger: #dc3545;
+      --primary: #2563eb;
       --bg: #0f172a;
       --surface: #1e293b;
       --text: #f8fafc;
       --text-muted: #94a3b8;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
     }
 
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
     body {
@@ -34,10 +37,9 @@
       user-select: none;
     }
 
-    /* Cabeçalho */
     header {
       background: var(--surface);
-      padding: 14px 24px;
+      padding: 14px 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -47,34 +49,27 @@
     .brand {
       display: flex;
       align-items: center;
-      gap: 12px;
-    }
-
-    .brand h1 {
-      font-size: 1.3rem;
-      font-weight: 700;
-      letter-spacing: 0.5px;
+      gap: 10px;
     }
 
     .badge-meal {
-      background: #3b82f6;
+      background: var(--primary);
       color: white;
       padding: 6px 14px;
       border-radius: 20px;
-      font-size: 0.95rem;
-      font-weight: 600;
+      font-size: 0.9rem;
+      font-weight: 700;
       text-transform: uppercase;
-      box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+      box-shadow: 0 0 10px rgba(37, 99, 235, 0.4);
     }
 
     .clock-display {
-      font-size: 1.4rem;
+      font-size: 1.3rem;
       font-weight: 700;
       font-variant-numeric: tabular-nums;
       color: #38bdf8;
     }
 
-    /* Área Principal / Câmera */
     main {
       flex: 1;
       display: flex;
@@ -82,16 +77,16 @@
       align-items: center;
       justify-content: center;
       position: relative;
-      padding: 16px;
+      padding: 12px;
     }
 
     .camera-wrapper {
       position: relative;
       width: 100%;
-      max-width: 480px;
-      height: 60vh;
+      max-width: 440px;
+      height: 58vh;
       background: #000;
-      border-radius: 24px;
+      border-radius: 20px;
       overflow: hidden;
       border: 3px solid #334155;
       box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
@@ -104,79 +99,70 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      transform: scaleX(-1); /* Efeito espelho */
+      transform: scaleX(-1);
     }
 
-    /* Moldura Guia Facial */
     .face-guide {
       position: absolute;
-      width: 220px;
-      height: 290px;
-      border: 3px dashed rgba(255, 255, 255, 0.6);
+      width: 200px;
+      height: 270px;
+      border: 3px dashed rgba(255, 255, 255, 0.5);
       border-radius: 50%;
-      box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.35);
+      box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.4);
       pointer-events: none;
-      transition: all 0.3s ease;
+      transition: all 0.25s ease;
     }
 
-    .face-guide.active {
-      border-color: #38bdf8;
+    .face-guide.recognized {
+      border-color: var(--success);
       border-style: solid;
-      box-shadow: 0 0 25px rgba(56, 189, 248, 0.6), 0 0 0 9999px rgba(0, 0, 0, 0.35);
+      box-shadow: 0 0 25px rgba(16, 185, 129, 0.8), 0 0 0 9999px rgba(0, 0, 0, 0.4);
+    }
+
+    .face-guide.warning {
+      border-color: var(--warning);
+      border-style: solid;
     }
 
     .status-banner {
       position: absolute;
-      bottom: 20px;
+      bottom: 16px;
       background: rgba(15, 23, 42, 0.85);
       backdrop-filter: blur(8px);
-      padding: 10px 24px;
-      border-radius: 30px;
-      font-size: 1rem;
+      padding: 8px 18px;
+      border-radius: 25px;
+      font-size: 0.95rem;
       font-weight: 500;
       border: 1px solid rgba(255, 255, 255, 0.1);
+      text-align: center;
     }
 
-    /* Painel de Ações Rápidas do Totem */
     .action-panel {
-      margin-top: 16px;
+      margin-top: 14px;
       display: flex;
-      gap: 12px;
+      gap: 10px;
       width: 100%;
-      max-width: 480px;
+      max-width: 440px;
     }
 
     .btn-action {
       flex: 1;
-      padding: 14px;
+      padding: 12px;
       border: none;
-      border-radius: 12px;
-      font-size: 1rem;
+      border-radius: 10px;
+      font-size: 0.95rem;
       font-weight: 600;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-      transition: transform 0.1s, opacity 0.2s;
+      gap: 6px;
     }
 
-    .btn-action:active {
-      transform: scale(0.98);
-    }
+    .btn-register { background: var(--surface); color: var(--text); border: 1px solid #475569; }
+    .btn-summary { background: #334155; color: var(--text); border: 1px solid #64748b; }
 
-    .btn-simulate {
-      background: #2563eb;
-      color: white;
-    }
-
-    .btn-summary {
-      background: var(--surface);
-      color: var(--text);
-      border: 1px solid #475569;
-    }
-
-    /* Modal de Sucesso / Feedback */
+    /* Feedback visual de confirmação */
     .feedback-overlay {
       position: absolute;
       inset: 0;
@@ -188,35 +174,19 @@
       background: rgba(16, 185, 129, 0.95);
       color: white;
       text-align: center;
-      padding: 24px;
-      animation: fadeIn 0.2s ease-out;
+      padding: 20px;
     }
 
-    .feedback-overlay.duplicate {
-      background: rgba(239, 68, 68, 0.95);
-    }
+    .feedback-overlay.duplicate { background: rgba(239, 68, 68, 0.95); }
+    .feedback-icon { font-size: 4rem; margin-bottom: 10px; }
+    .feedback-title { font-size: 1.8rem; font-weight: 800; }
+    .feedback-desc { font-size: 1.1rem; opacity: 0.95; margin-top: 4px; }
 
-    .feedback-icon {
-      font-size: 5rem;
-      margin-bottom: 16px;
-    }
-
-    .feedback-title {
-      font-size: 2rem;
-      font-weight: 800;
-      margin-bottom: 8px;
-    }
-
-    .feedback-desc {
-      font-size: 1.2rem;
-      opacity: 0.9;
-    }
-
-    /* Modal de Resumo Diário */
+    /* Modais */
     .modal {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.7);
+      background: rgba(0, 0, 0, 0.75);
       backdrop-filter: blur(4px);
       display: none;
       align-items: center;
@@ -228,10 +198,10 @@
     .modal-content {
       background: var(--surface);
       border: 1px solid #334155;
-      border-radius: 20px;
+      border-radius: 16px;
       width: 100%;
-      max-width: 520px;
-      padding: 24px;
+      max-width: 480px;
+      padding: 20px;
       max-height: 85vh;
       overflow-y: auto;
     }
@@ -240,121 +210,156 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
       border-bottom: 1px solid #334155;
-      padding-bottom: 12px;
+      padding-bottom: 10px;
+    }
+
+    .form-group {
+      margin-bottom: 12px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 10px;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      color: white;
+      font-size: 1rem;
+    }
+
+    .btn-submit {
+      width: 100%;
+      padding: 12px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
     }
 
     .summary-cards {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      margin-bottom: 20px;
+      gap: 8px;
+      margin-bottom: 16px;
     }
 
     .card-kpi {
       background: #0f172a;
-      border-radius: 12px;
-      padding: 12px;
+      border-radius: 10px;
+      padding: 10px;
       text-align: center;
       border: 1px solid #334155;
     }
 
-    .card-kpi .title {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      margin-bottom: 4px;
-    }
-
-    .card-kpi .number {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: #38bdf8;
-    }
+    .card-kpi .title { font-size: 0.75rem; color: var(--text-muted); }
+    .card-kpi .number { font-size: 1.4rem; font-weight: 700; color: #38bdf8; }
 
     .table-container {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 12px;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
     }
 
     .table-container th, .table-container td {
-      padding: 10px 8px;
+      padding: 8px;
       text-align: left;
       border-bottom: 1px solid #334155;
     }
 
-    .table-container th {
-      color: var(--text-muted);
-      font-weight: 600;
-    }
-
+    .table-container th { color: var(--text-muted); }
     .btn-close {
       background: #ef4444;
       color: white;
       border: none;
-      padding: 8px 16px;
-      border-radius: 8px;
-      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 6px;
       cursor: pointer;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: scale(0.95); }
-      to { opacity: 1; transform: scale(1); }
     }
   </style>
 </head>
 <body>
 
-  <!-- Cabeçalho do Totem -->
   <header>
     <div class="brand">
-      <span style="font-size: 1.6rem;">🍲</span>
+      <span style="font-size: 1.5rem;">🍲</span>
       <div>
-        <h1>Refeitório Multi</h1>
-        <small id="currentDateDisplay" style="color: var(--text-muted); font-size: 0.8rem;"></small>
+        <h1 style="font-size: 1.1rem;">Totem Refeitório</h1>
+        <small id="currentDateDisplay" style="color: var(--text-muted); font-size: 0.75rem;"></small>
       </div>
     </div>
-    <div class="badge-meal" id="activeMealBadge">Carregando...</div>
+    <div class="badge-meal" id="activeMealBadge">Iniciando...</div>
     <div class="clock-display" id="clockDisplay">00:00:00</div>
   </header>
 
-  <!-- Área Central com Câmera -->
   <main>
     <div class="camera-wrapper">
       <video id="webcam" autoplay playsinline muted></video>
-      <div class="face-guide active" id="faceGuide"></div>
-      <div class="status-banner" id="statusBanner">Aproxime o rosto da câmera</div>
+      <div class="face-guide" id="faceGuide"></div>
+      <div class="status-banner" id="statusBanner">Carregando modelos de IA...</div>
 
-      <!-- Feedback de Confirmação -->
       <div class="feedback-overlay" id="feedbackOverlay">
         <div class="feedback-icon" id="feedbackIcon">✅</div>
-        <div class="feedback-title" id="feedbackTitle">Refeição Confirmada!</div>
-        <div class="feedback-desc" id="feedbackDesc">Bom almoço, Carlos Silva!</div>
+        <div class="feedback-title" id="feedbackTitle">Confirmado!</div>
+        <div class="feedback-desc" id="feedbackDesc">Bom Almoço!</div>
       </div>
     </div>
 
-    <!-- Controles Operacionais do Totem -->
     <div class="action-panel">
-      <button class="btn-action btn-simulate" onclick="triggerRecognition()">
-        <span>👤</span> Simular Reconhecimento Facial
+      <button class="btn-action btn-register" onclick="openRegisterModal()">
+        <span>➕</span> Cadastrar Face
       </button>
       <button class="btn-action btn-summary" onclick="openSummaryModal()">
-        <span>📊</span> Ver Resumo do Dia
+        <span>📊</span> Resumo do Dia
       </button>
     </div>
   </main>
 
-  <!-- Modal de Resumo Diário da Gestão -->
+  <!-- Modal de Cadastro Facial -->
+  <div class="modal" id="registerModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Cadastrar Novo Colaborador</h3>
+        <button class="btn-close" onclick="closeRegisterModal()">X</button>
+      </div>
+      <div class="form-group">
+        <label>Matrícula / ID</label>
+        <input type="text" id="regId" placeholder="Ex: 1009">
+      </div>
+      <div class="form-group">
+        <label>Nome Completo</label>
+        <input type="text" id="regName" placeholder="Ex: Carlos Silva">
+      </div>
+      <div class="form-group">
+        <label>Setor / Departamento</label>
+        <input type="text" id="regSector" placeholder="Ex: Logística">
+      </div>
+      <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">
+        💡 Posicione a pessoa na frente da câmera e clique abaixo para capturar os traços faciais.
+      </p>
+      <button class="btn-submit" onclick="captureAndEnrollFace()">Capturar e Salvar Biometria</button>
+    </div>
+  </div>
+
+  <!-- Modal de Resumo Diário -->
   <div class="modal" id="summaryModal">
     <div class="modal-content">
       <div class="modal-header">
-        <h2>Resumo Diário de Refeições</h2>
-        <button class="btn-close" onclick="closeSummaryModal()">Fechar</button>
+        <h3>Resumo Diário de Refeições</h3>
+        <button class="btn-close" onclick="closeSummaryModal()">X</button>
       </div>
-
       <div class="summary-cards">
         <div class="card-kpi">
           <div class="title">☕ Café</div>
@@ -369,8 +374,6 @@
           <div class="number" id="countLanche">0</div>
         </div>
       </div>
-
-      <h3 style="font-size: 1rem; margin-bottom: 8px;">Últimos Registros de Hoje</h3>
       <table class="table-container">
         <thead>
           <tr>
@@ -379,55 +382,48 @@
             <th>Refeição</th>
           </tr>
         </thead>
-        <tbody id="logsTableBody">
-          <!-- Inserido dinamicamente -->
-        </tbody>
+        <tbody id="logsTableBody"></tbody>
       </table>
     </div>
   </div>
 
   <script>
     /* ========================================================
-       CONFIGURAÇÕES E BANCO LOCAL DE TESTES (MOCK)
+       CONFIGURAÇÕES E BANCO LOCAL DE EMBEDDINGS
        ======================================================== */
-    // Cole aqui a URL do seu Google Apps Script implantado como Web App
+    // Cole abaixo a URL gerada no seu Apps Script
     const GOOGLE_APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxamEfeH4aR3fX-VDo8fzjYFdUBc3S0kBEML8DnpT8E59MP1FMJoiOnssHLU8new1mh/exec";
 
-    // Banco de Colaboradores cadastrados para o teste de reconhecimento
-    const EMPLOYEES = [
-      { id: "1001", name: "Glauce Alves", sector: "Logística" },
-      { id: "1002", name: "Gláucio Alves", sector: "Operações" },
-      { id: "1003", name: "José Leonardo", sector: "Supply Chain" },
-      { id: "1004", name: "Aline Cassia", sector: "Fiscal" },
-      { id: "1005", name: "Fernando Lemos", sector: "Transportes" }
-    ];
-
+    // Banco de colaboradores com vetores biométricos salvos no localStorage
+    let registeredUsers = JSON.parse(localStorage.getItem("refeitorio_users") || "[]");
     let attendanceLogs = JSON.parse(localStorage.getItem("refeitorio_logs") || "[]");
 
+    let labeledFaceDescriptors = [];
+    let faceMatcher = null;
+    let isAiReady = false;
+    let isProcessing = false;
+
     /* ========================================================
-       SISTEMA DE ÁUDIO SINTETIZADO (SEM ARQUIVOS EXTERNOS)
+       ÁUDIO SINTETIZADO (FEEDBACK SONORO DO TOTEM)
        ======================================================== */
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
     function playBeep(type = "success") {
-      if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-      }
+      if (audioCtx.state === 'suspended') audioCtx.resume();
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
       osc.connect(gain);
       gain.connect(audioCtx.destination);
 
       if (type === "success") {
-        osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
-        osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.1); // A5
+        osc.frequency.setValueAtTime(587.33, audioCtx.currentTime);
+        osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.1);
         gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.35);
         osc.start(audioCtx.currentTime);
-        osc.stop(audioCtx.currentTime + 0.3);
+        osc.stop(audioCtx.currentTime + 0.35);
       } else {
         osc.type = "sawtooth";
-        osc.frequency.setValueAtTime(220, audioCtx.currentTime); // A3
+        osc.frequency.setValueAtTime(220, audioCtx.currentTime);
         gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
         osc.start(audioCtx.currentTime);
@@ -436,125 +432,169 @@
     }
 
     /* ========================================================
-       INICIALIZAÇÃO DA CÂMERA WEBCAM
-       ======================================================== */
-    async function initCamera() {
-      const video = document.getElementById('webcam');
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
-          audio: false
-        });
-        video.srcObject = stream;
-      } catch (err) {
-        console.warn("Câmera indisponível ou permissão negada:", err);
-        document.getElementById('statusBanner').innerText = "Câmera desativada (Modo de Demonstração)";
-      }
-    }
-
-    /* ========================================================
-       GERENCIAMENTO DE HORÁRIOS E REFEIÇÕES
+       HORÁRIOS E REFEIÇÕES
        ======================================================== */
     function getActiveMealInfo(now = new Date()) {
       const hour = now.getHours();
       const minutes = now.getMinutes();
-      const timeDecimal = hour + (minutes / 60);
+      const t = hour + (minutes / 60);
 
-      // Regras de Horários:
-      // 06:00 às 09:59 -> Café
-      // 10:00 às 14:59 -> Almoço
-      // 15:00 às 19:00 -> Lanche
-      if (timeDecimal >= 6 && timeDecimal < 10) {
-        return { name: "Café da Manhã", code: "CAFE", icon: "☕" };
-      } else if (timeDecimal >= 10 && timeDecimal < 15) {
-        return { name: "Almoço", code: "ALMOCO", icon: "🍛" };
-      } else if (timeDecimal >= 15 && timeDecimal <= 19) {
-        return { name: "Lanche da Tarde", code: "LANCHE", icon: "🥪" };
-      } else {
-        return { name: "Fora de Horário", code: "FECHADO", icon: "⛔" };
-      }
+      // Café: 06:00 às 09:59 | Almoço: 10:00 às 14:59 | Lanche: 15:00 às 19:00
+      if (t >= 6 && t < 10) return { name: "Café da Manhã", code: "CAFE", icon: "☕" };
+      if (t >= 10 && t < 15) return { name: "Almoço", code: "ALMOCO", icon: "🍛" };
+      if (t >= 15 && t <= 19) return { name: "Lanche da Tarde", code: "LANCHE", icon: "🥪" };
+      return { name: "Fora de Horário", code: "FECHADO", icon: "⛔" };
     }
 
     function updateClock() {
       const now = new Date();
-      const timeStr = now.toLocaleTimeString('pt-BR');
-      const dateStr = now.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' });
-
-      document.getElementById('clockDisplay').innerText = timeStr;
-      document.getElementById('currentDateDisplay').innerText = dateStr;
+      document.getElementById('clockDisplay').innerText = now.toLocaleTimeString('pt-BR');
+      document.getElementById('currentDateDisplay').innerText = now.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' });
 
       const activeMeal = getActiveMealInfo(now);
       const badge = document.getElementById('activeMealBadge');
       badge.innerText = `${activeMeal.icon} ${activeMeal.name}`;
-
-      if (activeMeal.code === "FECHADO") {
-        badge.style.background = "#64748b";
-      } else {
-        badge.style.background = "#2563eb";
-      }
+      badge.style.background = activeMeal.code === "FECHADO" ? "#64748b" : "#2563eb";
     }
 
     /* ========================================================
-       LÓGICA DE RECONHECIMENTO FACIAL E REGISTRO
+       INICIALIZAÇÃO DO FACE-API E CÂMERA
        ======================================================== */
-    let isProcessing = false;
+    async function initSystem() {
+      const banner = document.getElementById('statusBanner');
+      try {
+        banner.innerText = "Carregando rede neural facial...";
+        
+        // Carrega modelos pré-treinados hospedados na CDN
+        const MODEL_URL = "https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/";
+        await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
+        await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+        await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
 
-    function triggerRecognition() {
-      if (isProcessing) return;
+        rebuildMatcher();
 
-      const activeMeal = getActiveMealInfo();
-      if (activeMeal.code === "FECHADO") {
-        showFeedback(false, "Horário Encerrado", "O refeitório está fechado neste momento.");
-        playBeep("error");
+        banner.innerText = "Iniciando câmera...";
+        const video = document.getElementById('webcam');
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
+          audio: false
+        });
+        video.srcObject = stream;
+
+        video.onloadedmetadata = () => {
+          isAiReady = true;
+          banner.innerText = registeredUsers.length > 0 
+            ? "Aproxime o rosto para confirmar presença" 
+            : "Nenhuma face cadastrada. Clique em 'Cadastrar Face'.";
+          startContinuousRecognition();
+        };
+      } catch (err) {
+        console.error("Erro na inicialização:", err);
+        banner.innerText = "Atenção: Ative a permissão de câmera nas configurações.";
+      }
+    }
+
+    function rebuildMatcher() {
+      if (registeredUsers.length === 0) {
+        faceMatcher = null;
         return;
       }
 
-      isProcessing = true;
-      document.getElementById('faceGuide').style.borderColor = "#fbbf24";
-      document.getElementById('statusBanner').innerText = "Analisando traços faciais...";
+      labeledFaceDescriptors = registeredUsers.map(user => {
+        const floatArray = new Float32Array(user.descriptor);
+        return new faceapi.LabeledFaceDescriptors(user.id, [floatArray]);
+      });
 
-      // Simulação de detecção facial (leva 700ms)
-      setTimeout(() => {
-        // Seleciona um colaborador aleatório do cadastro para o teste
-        const randomEmp = EMPLOYEES[Math.floor(Math.random() * EMPLOYEES.length)];
-        const now = new Date();
-        const dateKey = now.toISOString().split("T")[0]; // YYYY-MM-DD
-        const timeStr = now.toLocaleTimeString('pt-BR');
+      // Distância máxima 0.55 para reconhecimento seguro
+      faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors, 0.55);
+    }
 
-        // Chave única para controle de duplicidade diária
-        const duplicateKey = `${randomEmp.id}_${dateKey}_${activeMeal.code}`;
+    /* ========================================================
+       LOOP CONTÍNUO DE RECONHECIMENTO FACIAL
+       ======================================================== */
+    async function startContinuousRecognition() {
+      const video = document.getElementById('webcam');
+      const guide = document.getElementById('faceGuide');
+      const banner = document.getElementById('statusBanner');
 
-        const isDuplicate = attendanceLogs.some(log => log.duplicateKey === duplicateKey);
+      setInterval(async () => {
+        if (!isAiReady || isProcessing || !faceMatcher) return;
 
-        if (isDuplicate) {
-          playBeep("error");
-          showFeedback(false, "Registro Já Realizado!", `${randomEmp.name} já registrou o ${activeMeal.name} hoje.`);
+        const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+          .withFaceLandmarks()
+          .withFaceDescriptor();
+
+        if (detection) {
+          guide.classList.add('warning');
+          const bestMatch = faceMatcher.findBestMatch(detection.descriptor);
+
+          if (bestMatch.label !== "unknown") {
+            const user = registeredUsers.find(u => u.id === bestMatch.label);
+            if (user) {
+              processMealRegistration(user);
+            }
+          }
         } else {
-          // Gravação do registro
-          const record = {
-            id: randomEmp.id,
-            name: randomEmp.name,
-            sector: randomEmp.sector,
-            date: dateKey,
-            time: timeStr,
-            meal: activeMeal.name,
-            duplicateKey: duplicateKey
-          };
-
-          attendanceLogs.unshift(record);
-          localStorage.setItem("refeitorio_logs", JSON.stringify(attendanceLogs));
-
-          playBeep("success");
-          showFeedback(true, `Bom ${activeMeal.name}!`, `${randomEmp.name} (${randomEmp.sector}) confirmado às ${timeStr}`);
-
-          // Envio assíncrono para a planilha Google Sheets
-          sendToGoogleSheets(record);
+          guide.classList.remove('warning', 'recognized');
         }
+      }, 600); // Roda a cada 600ms para economizar bateria e processador
+    }
 
-        document.getElementById('faceGuide').style.borderColor = "#38bdf8";
-        document.getElementById('statusBanner').innerText = "Aproxime o rosto da câmera";
-        isProcessing = false;
-      }, 700);
+    /* ========================================================
+       VALIDAÇÃO DE HORÁRIO, DUPLICIDADE E ENVIO
+       ======================================================== */
+    async function processMealRegistration(user) {
+      isProcessing = true;
+      const guide = document.getElementById('faceGuide');
+      const activeMeal = getActiveMealInfo();
+
+      if (activeMeal.code === "FECHADO") {
+        playBeep("error");
+        showFeedback(false, "Refeitório Fechado", "Horário de refeições indisponível agora.");
+        setTimeout(() => { isProcessing = false; }, 2500);
+        return;
+      }
+
+      const now = new Date();
+      const dateKey = now.toISOString().split("T")[0];
+      const timeStr = now.toLocaleTimeString('pt-BR');
+      const duplicateKey = `${user.id}_${dateKey}_${activeMeal.code}`;
+
+      // Checa duplicidade local
+      const isDuplicate = attendanceLogs.some(log => log.duplicateKey === duplicateKey);
+
+      if (isDuplicate) {
+        playBeep("error");
+        guide.classList.remove('recognized');
+        showFeedback(false, "Registro Já Efetuado!", `${user.name} já registrou o ${activeMeal.name} hoje.`);
+        setTimeout(() => { isProcessing = false; }, 3000);
+      } else {
+        guide.classList.add('recognized');
+        playBeep("success");
+
+        const record = {
+          id: user.id,
+          name: user.name,
+          sector: user.sector,
+          date: dateKey,
+          time: timeStr,
+          meal: activeMeal.name,
+          duplicateKey: duplicateKey
+        };
+
+        attendanceLogs.unshift(record);
+        localStorage.setItem("refeitorio_logs", JSON.stringify(attendanceLogs));
+
+        showFeedback(true, `Bom ${activeMeal.name}!`, `${user.name} (${user.sector}) registrado às ${timeStr}`);
+
+        // Envio assíncrono para a planilha
+        sendToGoogleSheets(record);
+
+        setTimeout(() => {
+          guide.classList.remove('recognized');
+          isProcessing = false;
+        }, 3000);
+      }
     }
 
     function showFeedback(isSuccess, title, desc) {
@@ -577,18 +617,14 @@
 
       setTimeout(() => {
         overlay.style.display = 'none';
-      }, 2500);
+      }, 2600);
     }
 
-    /* ========================================================
-       INTEGRAÇÃO COM GOOGLE SHEETS VIA APPS SCRIPT
-       ======================================================== */
     async function sendToGoogleSheets(record) {
       if (!GOOGLE_APPS_SCRIPT_URL || GOOGLE_APPS_SCRIPT_URL.includes("SEU_LINK")) {
-        console.log("Registro salvo no banco local (Google Apps Script não configurado).", record);
+        console.warn("Apps Script não configurado. Salvo apenas localmente.");
         return;
       }
-
       try {
         await fetch(GOOGLE_APPS_SCRIPT_URL, {
           method: "POST",
@@ -596,42 +632,84 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(record)
         });
-        console.log("Enviado com sucesso ao Google Sheets!");
+        console.log("Sincronizado com Google Sheets!");
       } catch (err) {
-        console.error("Erro ao sincronizar com Google Sheets:", err);
+        console.error("Erro de sincronização:", err);
       }
     }
 
     /* ========================================================
-       MODAL DE RESUMO DIÁRIO POR REFEIÇÃO
+       CADASTRO FACIAL EM TEMPO REAL
+       ======================================================== */
+    function openRegisterModal() {
+      document.getElementById('registerModal').style.display = 'flex';
+    }
+
+    function closeRegisterModal() {
+      document.getElementById('registerModal').style.display = 'none';
+    }
+
+    async function captureAndEnrollFace() {
+      const id = document.getElementById('regId').value.trim();
+      const name = document.getElementById('regName').value.trim();
+      const sector = document.getElementById('regSector').value.trim() || "Geral";
+      const video = document.getElementById('webcam');
+
+      if (!id || !name) {
+        alert("Preencha Matrícula e Nome!");
+        return;
+      }
+
+      const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions())
+        .withFaceLandmarks()
+        .withFaceDescriptor();
+
+      if (!detection) {
+        alert("Nenhum rosto identificado com clareza. Centralize o rosto e tente novamente.");
+        return;
+      }
+
+      // Converte Float32Array para array comum e salva no localStorage
+      const descriptorArray = Array.from(detection.descriptor);
+
+      registeredUsers = registeredUsers.filter(u => u.id !== id);
+      registeredUsers.push({ id, name, sector, descriptor: descriptorArray });
+      localStorage.setItem("refeitorio_users", JSON.stringify(registeredUsers));
+
+      rebuildMatcher();
+
+      alert(`✅ Colaborador ${name} cadastrado com sucesso!`);
+      document.getElementById('regId').value = "";
+      document.getElementById('regName').value = "";
+      document.getElementById('regSector').value = "";
+      closeRegisterModal();
+      document.getElementById('statusBanner').innerText = "Aproxime o rosto para confirmar presença";
+    }
+
+    /* ========================================================
+       MODAL DE RESUMO DIÁRIO
        ======================================================== */
     function openSummaryModal() {
       const modal = document.getElementById('summaryModal');
       const today = new Date().toISOString().split("T")[0];
       const todayLogs = attendanceLogs.filter(log => log.date === today);
 
-      // Contadores por tipo de refeição
-      const cafeCount = todayLogs.filter(l => l.meal.includes("Café")).length;
-      const almocoCount = todayLogs.filter(l => l.meal.includes("Almoço")).length;
-      const lancheCount = todayLogs.filter(l => l.meal.includes("Lanche")).length;
+      document.getElementById('countCafe').innerText = todayLogs.filter(l => l.meal.includes("Café")).length;
+      document.getElementById('countAlmoco').innerText = todayLogs.filter(l => l.meal.includes("Almoço")).length;
+      document.getElementById('countLanche').innerText = todayLogs.filter(l => l.meal.includes("Lanche")).length;
 
-      document.getElementById('countCafe').innerText = cafeCount;
-      document.getElementById('countAlmoco').innerText = almocoCount;
-      document.getElementById('countLanche').innerText = lancheCount;
-
-      // Renderiza as linhas da tabela
       const tbody = document.getElementById('logsTableBody');
       tbody.innerHTML = "";
 
       if (todayLogs.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--text-muted); padding: 20px;">Nenhum registro hoje até o momento.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--text-muted); padding: 15px;">Nenhum registro hoje.</td></tr>`;
       } else {
         todayLogs.slice(0, 15).forEach(log => {
           const tr = document.createElement('tr');
           tr.innerHTML = `
             <td><b>${log.time}</b></td>
             <td>${log.name}</td>
-            <td><span style="background: #334155; padding: 2px 8px; border-radius: 6px; font-size: 0.8rem;">${log.meal}</span></td>
+            <td><span style="background: #334155; padding: 2px 6px; border-radius: 4px;">${log.meal}</span></td>
           `;
           tbody.appendChild(tr);
         });
@@ -644,11 +722,10 @@
       document.getElementById('summaryModal').style.display = 'none';
     }
 
-    // Inicialização geral
     window.addEventListener('DOMContentLoaded', () => {
-      initCamera();
       updateClock();
       setInterval(updateClock, 1000);
+      initSystem();
     });
   </script>
 </body>
