@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Totem Refeitório - Multi</title>
+  <style>
+    :root {
+      --primary: #0056b3;
+      --primary-dark: #003d82;
+      --success: #28a745;
+      --warning: #ffc107;
+      --danger: #dc3545;
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    /* Cabeçalho */
+    header {
+      background: var(--surface);
+      padding: 14px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #334155;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand h1 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-meal {
+      background: #3b82f6;
+      color: white;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+    }
+
+    .clock-display {
+      font-size: 1.4rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: #38bdf8;
+    }
+
+    /* Área Principal / Câmera */
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      padding: 16px;
+    }
+
+    .camera-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 480px;
+      height: 60vh;
+      background: #000;
+      border-radius: 24px;
+      overflow: hidden;
+      border: 3px solid #334155;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transform: scaleX(-1); /* Efeito espelho */
+    }
+
+    /* Moldura Guia Facial */
+    .face-guide {
+      position: absolute;
+      width: 220px;
+      height: 290px;
+      border: 3px dashed rgba(255, 255, 255, 0.6);
+      border-radius: 50%;
+      box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.35);
+      pointer-events: none;
+      transition: all 0.3s ease;
+    }
+
+    .face-guide.active {
+      border-color: #38bdf8;
+      border-style: solid;
+      box-shadow: 0 0 25px rgba(56, 189, 248, 0.6), 0 0 0 9999px rgba(0, 0, 0, 0.35);
+    }
+
+    .status-banner {
+      position: absolute;
+      bottom: 20px;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(8px);
+      padding: 10px 24px;
+      border-radius: 30px;
+      font-size: 1rem;
+      font-weight: 500;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* Painel de Ações Rápidas do Totem */
+    .action-panel {
+      margin-top: 16px;
+      display: flex;
+      gap: 12px;
+      width: 100%;
+      max-width: 480px;
+    }
+
+    .btn-action {
+      flex: 1;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: transform 0.1s, opacity 0.2s;
+    }
+
+    .btn-action:active {
+      transform: scale(0.98);
+    }
+
+    .btn-simulate {
+      background: #2563eb;
+      color: white;
+    }
+
+    .btn-summary {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid #475569;
+    }
+
+    /* Modal de Sucesso / Feedback */
+    .feedback-overlay {
+      position: absolute;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      background: rgba(16, 185, 129, 0.95);
+      color: white;
+      text-align: center;
+      padding: 24px;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    .feedback-overlay.duplicate {
+      background: rgba(239, 68, 68, 0.95);
+    }
+
+    .feedback-icon {
+      font-size: 5rem;
+      margin-bottom: 16px;
+    }
+
+    .feedback-title {
+      font-size: 2rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .feedback-desc {
+      font-size: 1.2rem;
+      opacity: 0.9;
+    }
+
+    /* Modal de Resumo Diário */
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 16px;
+    }
+
+    .modal-content {
+      background: var(--surface);
+      border: 1px solid #334155;
+      border-radius: 20px;
+      width: 100%;
+      max-width: 520px;
+      padding: 24px;
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      border-bottom: 1px solid #334155;
+      padding-bottom: 12px;
+    }
+
+    .summary-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .card-kpi {
+      background: #0f172a;
+      border-radius: 12px;
+      padding: 12px;
+      text-align: center;
+      border: 1px solid #334155;
+    }
+
+    .card-kpi .title {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+
+    .card-kpi .number {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #38bdf8;
+    }
+
+    .table-container {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 0.9rem;
+    }
+
+    .table-container th, .table-container td {
+      padding: 10px 8px;
+      text-align: left;
+      border-bottom: 1px solid #334155;
+    }
+
+    .table-container th {
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .btn-close {
+      background: #ef4444;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Cabeçalho do Totem -->
+  <header>
+    <div class="brand">
+      <span style="font-size: 1.6rem;">🍲</span>
+      <div>
+        <h1>Refeitório Multi</h1>
+        <small id="currentDateDisplay" style="color: var(--text-muted); font-size: 0.8rem;"></small>
+      </div>
+    </div>
+    <div class="badge-meal" id="activeMealBadge">Carregando...</div>
+    <div class="clock-display" id="clockDisplay">00:00:00</div>
+  </header>
+
+  <!-- Área Central com Câmera -->
+  <main>
+    <div class="camera-wrapper">
+      <video id="webcam" autoplay playsinline muted></video>
+      <div class="face-guide active" id="faceGuide"></div>
+      <div class="status-banner" id="statusBanner">Aproxime o rosto da câmera</div>
+
+      <!-- Feedback de Confirmação -->
+      <div class="feedback-overlay" id="feedbackOverlay">
+        <div class="feedback-icon" id="feedbackIcon">✅</div>
+        <div class="feedback-title" id="feedbackTitle">Refeição Confirmada!</div>
+        <div class="feedback-desc" id="feedbackDesc">Bom almoço, Carlos Silva!</div>
+      </div>
+    </div>
+
+    <!-- Controles Operacionais do Totem -->
+    <div class="action-panel">
+      <button class="btn-action btn-simulate" onclick="triggerRecognition()">
+        <span>👤</span> Simular Reconhecimento Facial
+      </button>
+      <button class="btn-action btn-summary" onclick="openSummaryModal()">
+        <span>📊</span> Ver Resumo do Dia
+      </button>
+    </div>
+  </main>
+
+  <!-- Modal de Resumo Diário da Gestão -->
+  <div class="modal" id="summaryModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Resumo Diário de Refeições</h2>
+        <button class="btn-close" onclick="closeSummaryModal()">Fechar</button>
+      </div>
+
+      <div class="summary-cards">
+        <div class="card-kpi">
+          <div class="title">☕ Café</div>
+          <div class="number" id="countCafe">0</div>
+        </div>
+        <div class="card-kpi">
+          <div class="title">🍛 Almoço</div>
+          <div class="number" id="countAlmoco">0</div>
+        </div>
+        <div class="card-kpi">
+          <div class="title">🥪 Lanche</div>
+          <div class="number" id="countLanche">0</div>
+        </div>
+      </div>
+
+      <h3 style="font-size: 1rem; margin-bottom: 8px;">Últimos Registros de Hoje</h3>
+      <table class="table-container">
+        <thead>
+          <tr>
+            <th>Hora</th>
+            <th>Nome</th>
+            <th>Refeição</th>
+          </tr>
+        </thead>
+        <tbody id="logsTableBody">
+          <!-- Inserido dinamicamente -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    /* ========================================================
+       CONFIGURAÇÕES E BANCO LOCAL DE TESTES (MOCK)
+       ======================================================== */
+    // Cole aqui a URL do seu Google Apps Script implantado como Web App
+    const GOOGLE_APPS_SCRIPT_URL = "SEU_LINK_DO_APPS_SCRIPT_AQUI";
+
+    // Banco de Colaboradores cadastrados para o teste de reconhecimento
+    const EMPLOYEES = [
+      { id: "1001", name: "Glauce Alves", sector: "Logística" },
+      { id: "1002", name: "Gláucio Alves", sector: "Operações" },
+      { id: "1003", name: "José Leonardo", sector: "Supply Chain" },
+      { id: "1004", name: "Aline Cassia", sector: "Fiscal" },
+      { id: "1005", name: "Fernando Lemos", sector: "Transportes" }
+    ];
+
+    let attendanceLogs = JSON.parse(localStorage.getItem("refeitorio_logs") || "[]");
+
+    /* ========================================================
+       SISTEMA DE ÁUDIO SINTETIZADO (SEM ARQUIVOS EXTERNOS)
+       ======================================================== */
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playBeep(type = "success") {
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      if (type === "success") {
+        osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
+        osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.1); // A5
+        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+        osc.start(audioCtx.currentTime);
+        osc.stop(audioCtx.currentTime + 0.3);
+      } else {
+        osc.type = "sawtooth";
+        osc.frequency.setValueAtTime(220, audioCtx.currentTime); // A3
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+        osc.start(audioCtx.currentTime);
+        osc.stop(audioCtx.currentTime + 0.4);
+      }
+    }
+
+    /* ========================================================
+       INICIALIZAÇÃO DA CÂMERA WEBCAM
+       ======================================================== */
+    async function initCamera() {
+      const video = document.getElementById('webcam');
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } },
+          audio: false
+        });
+        video.srcObject = stream;
+      } catch (err) {
+        console.warn("Câmera indisponível ou permissão negada:", err);
+        document.getElementById('statusBanner').innerText = "Câmera desativada (Modo de Demonstração)";
+      }
+    }
+
+    /* ========================================================
+       GERENCIAMENTO DE HORÁRIOS E REFEIÇÕES
+       ======================================================== */
+    function getActiveMealInfo(now = new Date()) {
+      const hour = now.getHours();
+      const minutes = now.getMinutes();
+      const timeDecimal = hour + (minutes / 60);
+
+      // Regras de Horários:
+      // 06:00 às 09:59 -> Café
+      // 10:00 às 14:59 -> Almoço
+      // 15:00 às 19:00 -> Lanche
+      if (timeDecimal >= 6 && timeDecimal < 10) {
+        return { name: "Café da Manhã", code: "CAFE", icon: "☕" };
+      } else if (timeDecimal >= 10 && timeDecimal < 15) {
+        return { name: "Almoço", code: "ALMOCO", icon: "🍛" };
+      } else if (timeDecimal >= 15 && timeDecimal <= 19) {
+        return { name: "Lanche da Tarde", code: "LANCHE", icon: "🥪" };
+      } else {
+        return { name: "Fora de Horário", code: "FECHADO", icon: "⛔" };
+      }
+    }
+
+    function updateClock() {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('pt-BR');
+      const dateStr = now.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' });
+
+      document.getElementById('clockDisplay').innerText = timeStr;
+      document.getElementById('currentDateDisplay').innerText = dateStr;
+
+      const activeMeal = getActiveMealInfo(now);
+      const badge = document.getElementById('activeMealBadge');
+      badge.innerText = `${activeMeal.icon} ${activeMeal.name}`;
+
+      if (activeMeal.code === "FECHADO") {
+        badge.style.background = "#64748b";
+      } else {
+        badge.style.background = "#2563eb";
+      }
+    }
+
+    /* ========================================================
+       LÓGICA DE RECONHECIMENTO FACIAL E REGISTRO
+       ======================================================== */
+    let isProcessing = false;
+
+    function triggerRecognition() {
+      if (isProcessing) return;
+
+      const activeMeal = getActiveMealInfo();
+      if (activeMeal.code === "FECHADO") {
+        showFeedback(false, "Horário Encerrado", "O refeitório está fechado neste momento.");
+        playBeep("error");
+        return;
+      }
+
+      isProcessing = true;
+      document.getElementById('faceGuide').style.borderColor = "#fbbf24";
+      document.getElementById('statusBanner').innerText = "Analisando traços faciais...";
+
+      // Simulação de detecção facial (leva 700ms)
+      setTimeout(() => {
+        // Seleciona um colaborador aleatório do cadastro para o teste
+        const randomEmp = EMPLOYEES[Math.floor(Math.random() * EMPLOYEES.length)];
+        const now = new Date();
+        const dateKey = now.toISOString().split("T")[0]; // YYYY-MM-DD
+        const timeStr = now.toLocaleTimeString('pt-BR');
+
+        // Chave única para controle de duplicidade diária
+        const duplicateKey = `${randomEmp.id}_${dateKey}_${activeMeal.code}`;
+
+        const isDuplicate = attendanceLogs.some(log => log.duplicateKey === duplicateKey);
+
+        if (isDuplicate) {
+          playBeep("error");
+          showFeedback(false, "Registro Já Realizado!", `${randomEmp.name} já registrou o ${activeMeal.name} hoje.`);
+        } else {
+          // Gravação do registro
+          const record = {
+            id: randomEmp.id,
+            name: randomEmp.name,
+            sector: randomEmp.sector,
+            date: dateKey,
+            time: timeStr,
+            meal: activeMeal.name,
+            duplicateKey: duplicateKey
+          };
+
+          attendanceLogs.unshift(record);
+          localStorage.setItem("refeitorio_logs", JSON.stringify(attendanceLogs));
+
+          playBeep("success");
+          showFeedback(true, `Bom ${activeMeal.name}!`, `${randomEmp.name} (${randomEmp.sector}) confirmado às ${timeStr}`);
+
+          // Envio assíncrono para a planilha Google Sheets
+          sendToGoogleSheets(record);
+        }
+
+        document.getElementById('faceGuide').style.borderColor = "#38bdf8";
+        document.getElementById('statusBanner').innerText = "Aproxime o rosto da câmera";
+        isProcessing = false;
+      }, 700);
+    }
+
+    function showFeedback(isSuccess, title, desc) {
+      const overlay = document.getElementById('feedbackOverlay');
+      const icon = document.getElementById('feedbackIcon');
+      const titleEl = document.getElementById('feedbackTitle');
+      const descEl = document.getElementById('feedbackDesc');
+
+      if (isSuccess) {
+        overlay.classList.remove('duplicate');
+        icon.innerText = "✅";
+      } else {
+        overlay.classList.add('duplicate');
+        icon.innerText = "⚠️";
+      }
+
+      titleEl.innerText = title;
+      descEl.innerText = desc;
+      overlay.style.display = 'flex';
+
+      setTimeout(() => {
+        overlay.style.display = 'none';
+      }, 2500);
+    }
+
+    /* ========================================================
+       INTEGRAÇÃO COM GOOGLE SHEETS VIA APPS SCRIPT
+       ======================================================== */
+    async function sendToGoogleSheets(record) {
+      if (!GOOGLE_APPS_SCRIPT_URL || GOOGLE_APPS_SCRIPT_URL.includes("SEU_LINK")) {
+        console.log("Registro salvo no banco local (Google Apps Script não configurado).", record);
+        return;
+      }
+
+      try {
+        await fetch(GOOGLE_APPS_SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(record)
+        });
+        console.log("Enviado com sucesso ao Google Sheets!");
+      } catch (err) {
+        console.error("Erro ao sincronizar com Google Sheets:", err);
+      }
+    }
+
+    /* ========================================================
+       MODAL DE RESUMO DIÁRIO POR REFEIÇÃO
+       ======================================================== */
+    function openSummaryModal() {
+      const modal = document.getElementById('summaryModal');
+      const today = new Date().toISOString().split("T")[0];
+      const todayLogs = attendanceLogs.filter(log => log.date === today);
+
+      // Contadores por tipo de refeição
+      const cafeCount = todayLogs.filter(l => l.meal.includes("Café")).length;
+      const almocoCount = todayLogs.filter(l => l.meal.includes("Almoço")).length;
+      const lancheCount = todayLogs.filter(l => l.meal.includes("Lanche")).length;
+
+      document.getElementById('countCafe').innerText = cafeCount;
+      document.getElementById('countAlmoco').innerText = almocoCount;
+      document.getElementById('countLanche').innerText = lancheCount;
+
+      // Renderiza as linhas da tabela
+      const tbody = document.getElementById('logsTableBody');
+      tbody.innerHTML = "";
+
+      if (todayLogs.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--text-muted); padding: 20px;">Nenhum registro hoje até o momento.</td></tr>`;
+      } else {
+        todayLogs.slice(0, 15).forEach(log => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td><b>${log.time}</b></td>
+            <td>${log.name}</td>
+            <td><span style="background: #334155; padding: 2px 8px; border-radius: 6px; font-size: 0.8rem;">${log.meal}</span></td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      modal.style.display = 'flex';
+    }
+
+    function closeSummaryModal() {
+      document.getElementById('summaryModal').style.display = 'none';
+    }
+
+    // Inicialização geral
+    window.addEventListener('DOMContentLoaded', () => {
+      initCamera();
+      updateClock();
+      setInterval(updateClock, 1000);
+    });
+  </script>
+</body>
+</html>
